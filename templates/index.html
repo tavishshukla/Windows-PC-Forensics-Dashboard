@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sentinel PC — Forensics Command Center</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-icon">S</div><div><strong>SENTINEL PC</strong><span>FORENSICS CENTER</span></div></div>
+  <div class="host-card"><span class="live-dot"></span><div><b id="side-host">Loading host</b><small id="side-user">Local workstation</small></div></div>
+  <nav>
+    <a class="active" href="#overview"><span>01</span>Overview</a>
+    <a href="#hardware"><span>02</span>Hardware</a>
+    <a href="#security"><span>03</span>Security</a>
+    <a href="#processes"><span>04</span>Processes</a>
+    <a href="#network"><span>05</span>Network</a>
+    <a href="#services"><span>06</span>Services</a>
+    <a href="#persistence"><span>07</span>Persistence</a>
+    <a href="#events"><span>08</span>Events</a>
+    <a href="#sessions"><span>09</span>Sessions</a>
+    <a href="#inventory"><span>10</span>Inventory</a>
+    <a href="#history"><span>11</span>History</a>
+    <a href="#advanced"><span>12</span>Deep Telemetry</a>
+  </nav>
+  <div class="sidebar-bottom"><span class="lock-badge">READ ONLY</span><p>No process killing<br>No firewall changes<br>No credential collection</p></div>
+</aside>
+
+<main>
+<header class="topbar">
+  <div><div class="crumb">LOCAL MACHINE / SECURITY TELEMETRY</div><h1>PC Security Overview</h1></div>
+  <div class="top-right"><span class="live-dot"></span><span id="last-update">Connecting...</span><span class="readonly">LIVE</span></div>
+</header>
+
+<section id="overview" class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow">LIVE HOST OVERVIEW</div>
+    <h2 id="risk-title">Assessing workstation...</h2>
+    <p id="risk-detail">Collecting read-only telemetry across Windows, hardware, processes and network state.</p>
+    <div class="hero-tags"><span id="tag-os">WINDOWS</span><span id="tag-build">BUILD —</span><span id="tag-boot">BOOT —</span></div>
+  </div>
+  <div class="risk-orb"><div class="orb-value"><strong id="risk-score">—</strong><small>/100</small><span>RISK SCORE</span></div></div>
+</section>
+
+<div class="signal-strip" id="signals"></div>
+<div class="metric-grid" id="stats"></div>
+
+<section class="panel">
+  <div class="section-head"><div><div class="eyebrow">REAL-TIME TELEMETRY</div><h2>Machine Activity</h2><p>CPU, memory and disk pressure from recent local snapshots.</p></div><span class="refresh-pill">AUTO 5s</span></div>
+  <canvas id="activity-chart"></canvas>
+</section>
+
+<section id="hardware" class="panel">
+  <div class="section-head"><div><div class="eyebrow">02 / HARDWARE</div><h2>System Identity</h2><p>Platform, firmware, processor, memory and graphics details.</p></div></div>
+  <div class="detail-grid" id="hardware-grid"></div>
+</section>
+
+<section id="security" class="panel">
+  <div class="section-head"><div><div class="eyebrow">03 / SECURITY</div><h2>Security Posture</h2><p>Current Windows Defender and firewall posture.</p></div></div>
+  <div class="detail-grid" id="security-grid"></div>
+  <div id="risk-findings" class="finding-stack"></div>
+</section>
+
+<section id="changes" class="panel">
+  <div class="section-head"><div><div class="eyebrow">LIVE DETECTION</div><h2>What Changed</h2><p>Process, network, service and startup changes between samples.</p></div></div>
+  <div id="changes-grid" class="metric-grid compact"></div>
+  <div id="live-findings" class="finding-stack"></div>
+</section>
+
+<section id="processes" class="panel">
+  <div class="section-head"><div><div class="eyebrow">04 / PROCESS INTELLIGENCE</div><h2>Running Processes</h2><p>PID, parent PID, owner, RAM, start time and executable location.</p></div><input id="process-filter" placeholder="Search process, user or path"></div>
+  <div class="table-shell"><table><thead><tr><th>PID</th><th>Process</th><th>PPID</th><th>User</th><th>RAM</th><th>RAM %</th><th>Threads</th><th>CPU Time</th><th>I/O Read</th><th>I/O Write</th><th>Status</th><th>Started</th><th>Executable</th></tr></thead><tbody id="procs"></tbody></table></div>
+</section>
+
+<section id="network" class="panel">
+  <div class="section-head"><div><div class="eyebrow">05 / NETWORK INTELLIGENCE</div><h2>Active Connections</h2><p>Local and remote endpoints with process ownership where available.</p></div><input id="network-filter" placeholder="Search IP, port, PID"></div>
+  <div id="network-summary" class="mini-grid"></div>
+  <div class="table-shell"><table><thead><tr><th>PID</th><th>Local</th><th>Remote</th><th>Family</th><th>Status</th><th>Process</th><th>User</th></tr></thead><tbody id="net"></tbody></table></div>
+</section>
+
+<section id="services" class="panel">
+  <div class="section-head"><div><div class="eyebrow">06 / SERVICES</div><h2>Windows Services</h2><p>Observed service state and configured startup mode.</p></div><input id="service-filter" placeholder="Search service"></div>
+  <div class="table-shell"><table><thead><tr><th>Name</th><th>Display Name</th><th>Status</th><th>Start Type</th></tr></thead><tbody id="services-table"></tbody></table></div>
+</section>
+
+<section id="persistence" class="panel">
+  <div class="section-head"><div><div class="eyebrow">07 / PERSISTENCE</div><h2>Startup & Scheduled Tasks</h2><p>Registry startup entries and scheduled task metadata for review.</p></div><input id="task-filter" placeholder="Search task"></div>
+  <div class="subhead">REGISTRY STARTUP ENTRIES</div>
+  <div class="table-shell"><table><thead><tr><th>Location</th><th>Name</th><th>Command</th></tr></thead><tbody id="startup-table"></tbody></table></div>
+  <div class="subhead">SCHEDULED TASKS</div>
+  <div class="table-shell"><table><thead><tr><th>Name</th><th>Path</th><th>State</th><th>Author</th><th>Description</th></tr></thead><tbody id="tasks-table"></tbody></table></div>
+</section>
+
+<section id="events" class="panel">
+  <div class="section-head"><div><div class="eyebrow">08 / EVENT INTELLIGENCE</div><h2>Windows Events</h2><p>Recent System, Application and Security event summaries.</p></div></div>
+  <div class="table-shell"><table><thead><tr><th>Time</th><th>Log</th><th>ID</th><th>Level</th><th>Provider</th><th>Message</th></tr></thead><tbody id="events-table"></tbody></table></div>
+</section>
+
+<section id="sessions" class="panel">
+  <div class="section-head"><div><div class="eyebrow">09 / SESSIONS</div><h2>Logged-on Sessions</h2><p>User and session metadata exposed by Windows management interfaces.</p></div></div>
+  <div class="table-shell"><table><thead><tr><th>User</th><th>Domain</th><th>Session</th><th>State</th><th>Logon Type</th><th>Start</th></tr></thead><tbody id="sessions-table"></tbody></table></div>
+</section>
+
+<section id="inventory" class="panel">
+  <div class="section-head"><div><div class="eyebrow">10 / FULL INVENTORY</div><h2>PC Inventory</h2><p>Hardware, storage, adapters, routing, users, software, updates, drivers, printers and USB devices.</p></div></div>
+  <div id="inventory-content" class="inventory-grid"><div class="emptybox">Loading inventory...</div></div>
+</section>
+
+<section id="advanced" class="panel">
+  <div class="section-head"><div><div class="eyebrow">12 / DEEP TELEMETRY</div><h2>Windows Health & Reliability</h2><p>Additional read-only power, security-provider, update-service, time-sync, crash and event-volume telemetry.</p></div><span class="refresh-pill">AUTO 15s</span></div>
+  <div id="advanced-grid" class="detail-grid"></div>
+  <div class="subhead">SECURITY PRODUCTS</div>
+  <div id="advanced-security" class="inventory-grid"></div>
+  <div class="subhead">UPDATE SERVICES</div>
+  <div class="table-shell"><table><thead><tr><th>Name</th><th>State</th><th>Start Mode</th><th>PID</th><th>Service Account</th></tr></thead><tbody id="update-services"></tbody></table></div>
+  <div class="subhead">EVENT VOLUME — LAST 24 HOURS</div>
+  <div class="table-shell"><table><thead><tr><th>Log</th><th>Level</th><th>Count</th><th>Window</th></tr></thead><tbody id="event-counts"></tbody></table></div>
+  <div class="subhead">RECENT APPLICATION CRASH / WER EVENTS</div>
+  <div class="table-shell"><table><thead><tr><th>Time</th><th>ID</th><th>Provider</th><th>Level</th><th>Message</th></tr></thead><tbody id="reliability-events"></tbody></table></div>
+  <div class="subhead">TIME SYNCHRONIZATION</div>
+  <pre id="time-sync" class="telemetry-pre"></pre>
+  <div class="subhead">POWER CAPABILITIES</div>
+  <pre id="power-capabilities" class="telemetry-pre"></pre>
+</section>
+
+<section id="history" class="panel">
+  <div class="section-head"><div><div class="eyebrow">11 / HISTORY</div><h2>Historical Telemetry</h2><p>Snapshots and findings stored locally in SQLite.</p></div></div>
+  <div class="table-shell"><table><thead><tr><th>Time</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Processes</th><th>Connections</th><th>Risk</th></tr></thead><tbody id="history-table"></tbody></table></div>
+  <div class="subhead">FINDING HISTORY</div>
+  <div class="table-shell"><table><thead><tr><th>Time</th><th>Severity</th><th>Finding</th></tr></thead><tbody id="findings-table"></tbody></table></div>
+</section>
+
+<footer>Sentinel PC • Local read-only forensic telemetry • Designed for authorized use on this machine.</footer>
+</main>
+</div>
+
+<script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const metric=(k,v)=>"<div class='metric'><span>"+esc(k)+"</span><b>"+esc(v)+"</b></div>";
+const card=(k,v)=>"<div class='detail-card'><span>"+esc(k)+"</span><b>"+esc(v??"Unavailable")+"</b></div>";
+const empty=(cols,msg="No data available")=>"<tr><td colspan='"+cols+"' class='empty'>"+esc(msg)+"</td></tr>";
+const setRows=(id,html,cols)=>document.getElementById(id).innerHTML=html||empty(cols);
+const bytes=n=>{n=Number(n||0);const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i?1:0)+" "+u[i]};
+const filterTable=(input,tbody)=>{const q=input.value.toLowerCase();[...document.querySelectorAll("#"+tbody+" tr")].forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?"":"none")};
+const invSection=(title,items)=>"<div class='inv-section'><h3>"+esc(title)+" <em>"+items.length+"</em></h3><div class='inv-list'>"+(items.length?items.map(o=>"<div class='inv-row'>"+Object.entries(o).map(([k,v])=>"<div><small>"+esc(k)+"</small><b>"+esc(typeof v==="object"?JSON.stringify(v):v)+"</b></div>").join("")+"</div>").join(""):"<div class='emptybox'>No data returned</div>")+"</div></div>";
+const invScalar=(title,obj)=>invSection(title,obj&&typeof obj==="object"&&!Array.isArray(obj)?[obj]:[]);
+
+function drawChart(rows){
+ const c=document.getElementById("activity-chart"),ctx=c.getContext("2d"),w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;
+ c.width=w*d;c.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);
+ if(!rows.length){ctx.fillStyle="#718096";ctx.fillText("Collecting historical samples...",24,32);return}
+ const p={l:42,r:18,t:18,b:28},iw=w-p.l-p.r,ih=h-p.t-p.b;
+ ctx.font="10px Segoe UI";
+ [0,25,50,75,100].forEach(v=>{const y=p.t+ih-v/100*ih;ctx.strokeStyle="#1b2737";ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle="#607086";ctx.fillText(v+"%",8,y+3)});
+ [["cpu","#9a83ff"],["memory","#55d6a1"],["disk","#e8b86b"]].forEach(([key,col])=>{ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();rows.forEach((r,i)=>{const x=p.l+i/Math.max(rows.length-1,1)*iw,y=p.t+ih-(Number(r[key]||0)/100)*ih;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()});
+ [["CPU","#9a83ff"],["RAM","#55d6a1"],["DISK","#e8b86b"]].forEach((x,i)=>{ctx.fillStyle=x[1];ctx.fillRect(p.l+i*78,h-16,8,8);ctx.fillStyle="#8090a5";ctx.fillText(x[0],p.l+13+i*78,h-9)});
+}
+
+async function load(){
+ try{
+  const x=await fetch("/api/snapshot").then(r=>r.json()),w=x.windows||{},d=w.defender||{},risk=x.risk||{},fw=w.firewall||[];
+  document.getElementById("side-host").textContent=x.host||"Unknown host";
+  document.getElementById("side-user").textContent=x.user||"Local workstation";
+  document.getElementById("last-update").textContent="Updated "+new Date().toLocaleTimeString();
+  document.getElementById("tag-os").textContent=(w.windows_version||"WINDOWS").replace("Microsoft ","").toUpperCase();
+  document.getElementById("tag-build").textContent="BUILD "+(w.build||"—");
+  document.getElementById("tag-boot").textContent="BOOT "+(x.boot_time||"—").replace("T"," ");
+  const score=Number(risk.score??0);document.getElementById("risk-score").textContent=score;
+  document.querySelector(".risk-orb").style.setProperty("--score",Math.min(score,100));
+  document.getElementById("risk-title").textContent="Risk level: "+String(risk.level??"unknown").toUpperCase();
+  document.getElementById("risk-detail").textContent=(risk.findings||[]).length+" current finding(s) contribute to the local posture score.";
+  const fwOn=fw.filter(f=>f.Enabled).length;
+  document.getElementById("signals").innerHTML=[["DEFENDER",d.AntivirusEnabled===true?"ACTIVE":"CHECK"],["REAL-TIME",d.RealTimeProtectionEnabled===true?"ACTIVE":"CHECK"],["FIREWALL",fwOn+"/"+fw.length],["SERVICES",(x.services||[]).length],["STARTUP",(x.startup||[]).length]].map(a=>"<div class='signal'><span>"+esc(a[0])+"</span><b>"+esc(a[1])+"</b></div>").join("");
+  document.getElementById("stats").innerHTML=[
+   metric("CPU",x.cpu+"%"),metric("RAM",x.memory+"%"),metric("SYSTEM DISK",x.disk+"%"),
+   metric("PROCESSES",(x.processes||[]).length),metric("CONNECTIONS",(x.connections||[]).length),
+   metric("NETWORK IN",bytes(x.network?.received)),metric("NETWORK OUT",bytes(x.network?.sent)),
+   metric("DISK READ",bytes(x.disk_activity?.read_bytes)),metric("DISK WRITE",bytes(x.disk_activity?.write_bytes)),
+   metric("CORES / THREADS",(x.cpu_cores??"—")+" / "+(x.cpu_threads??"—")),
+   metric("UPTIME",Math.floor((x.uptime||0)/3600)+"h "+Math.floor(((x.uptime||0)%3600)/60)+"m"),
+   metric("BATTERY",x.battery?.percent==null?"N/A":x.battery.percent+"%")
+  ].join("");
+  document.getElementById("hardware-grid").innerHTML=[
+   card("MANUFACTURER",w.manufacturer),card("MODEL",w.model),card("WINDOWS",w.windows_version),card("BUILD",w.build),
+   card("BIOS",w.bios),card("BIOS VERSION",w.bios_version),
+   card("GPU",(w.gpu||[]).map(g=>g.Name).filter(Boolean).join(", ")||"Unavailable"),
+   card("CPU FREQUENCY",x.cpu_frequency?.current_mhz?x.cpu_frequency.current_mhz+" MHz":"Unavailable"),
+   card("MEMORY",bytes(x.memory_total)),card("AVAILABLE RAM",bytes(x.memory_available)),
+   card("BOOT TIME",x.boot_time),card("CURRENT USER",x.user)
+  ].join("");
+  document.getElementById("security-grid").innerHTML=[
+   card("DEFENDER SERVICE",d.AMServiceEnabled===true?"Enabled":d.AMServiceEnabled===false?"Disabled":"Unavailable"),
+   card("ANTIVIRUS",d.AntivirusEnabled===true?"Enabled":d.AntivirusEnabled===false?"Disabled":"Unavailable"),
+   card("REAL-TIME PROTECTION",d.RealTimeProtectionEnabled===true?"Enabled":d.RealTimeProtectionEnabled===false?"Disabled":"Unavailable"),
+   card("FIREWALL PROFILES",fwOn+"/"+fw.length+" enabled"),
+   card("SIGNATURE UPDATE",d.AntivirusSignatureLastUpdated||"Unavailable")
+  ].join("");
+  document.getElementById("risk-findings").innerHTML=(risk.findings||[]).map(f=>"<div class='finding "+esc(f.severity)+"'><b>"+esc(f.severity).toUpperCase()+"</b><span>"+esc(f.reason)+"</span></div>").join("")||"<div class='finding good'><b>GOOD</b><span>No current risk findings.</span></div>";
+  setRows("procs",(x.processes||[]).map(p=>"<tr><td>"+p.pid+"</td><td><b>"+esc(p.name)+"</b></td><td>"+(p.ppid??"")+"</td><td>"+esc(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+esc(p.memory_percent??"")+"</td><td>"+esc(p.threads??"")+"</td><td>"+esc(((Number(p.cpu_user_seconds)||0)+(Number(p.cpu_system_seconds)||0)).toFixed(2))+" s</td><td>"+bytes(p.io_read_bytes)+"</td><td>"+bytes(p.io_write_bytes)+"</td><td><span class='chip'>"+esc(p.status)+"</span></td><td>"+esc(p.started)+"</td><td class='path'>"+esc(p.exe)+"</td></tr>").join(""),13);
+  const corr=await fetch("/api/correlation").then(r=>r.json());const cmap={};(corr||[]).forEach(v=>cmap[v.pid]=v);
+  const conns=x.connections||[];
+  setRows("net",conns.map(c=>"<tr><td>"+(c.pid??"")+"</td><td>"+esc(c.local)+"</td><td>"+esc(c.remote)+"</td><td>"+esc(c.family)+"</td><td>"+esc(c.status)+"</td><td>"+esc(cmap[c.pid]?.process||"Unknown")+"</td><td>"+esc(cmap[c.pid]?.user||"Unknown")+"</td></tr>").join(""),7);
+  document.getElementById("network-summary").innerHTML=[metric("TOTAL",conns.length),metric("ESTABLISHED",conns.filter(c=>c.status==="ESTABLISHED").length),metric("LISTENING",conns.filter(c=>c.status==="LISTEN").length),metric("BYTES IN",bytes(x.network?.received)),metric("BYTES OUT",bytes(x.network?.sent))].join("");
+  setRows("services-table",(x.services||[]).slice(0,300).map(s=>"<tr><td>"+esc(s.Name)+"</td><td>"+esc(s.DisplayName)+"</td><td><span class='chip'>"+esc(s.Status)+"</span></td><td>"+esc(s.StartType)+"</td></tr>").join(""),4);
+  setRows("startup-table",(x.startup||[]).map(s=>"<tr><td>"+esc(s.Location)+"</td><td><b>"+esc(s.Name)+"</b></td><td class='path'>"+esc(s.Command)+"</td></tr>").join(""),3);
+  setRows("events-table",(x.events||[]).map(v=>"<tr><td>"+esc(v.Time)+"</td><td>"+esc(v.Log)+"</td><td>"+esc(v.Id)+"</td><td>"+esc(v.Level)+"</td><td>"+esc(v.Provider)+"</td><td class='message'>"+esc(v.Message)+"</td></tr>").join(""),6);
+  const sessions=await fetch("/api/sessions").then(r=>r.json());
+  setRows("sessions-table",(sessions||[]).map(s=>"<tr><td>"+esc(s.UserName||s.User||"")+"</td><td>"+esc(s.Domain||"")+"</td><td>"+esc(s.LogonId||s.SessionId||"")+"</td><td>"+esc(s.State||"")+"</td><td>"+esc(s.LogonType||"")+"</td><td>"+esc(s.StartTime||"")+"</td></tr>").join(""),6);
+  const tasks=await fetch("/api/scheduled-tasks").then(r=>r.json());
+  setRows("tasks-table",(tasks||[]).slice(0,350).map(t=>"<tr><td>"+esc(t.TaskName)+"</td><td>"+esc(t.TaskPath)+"</td><td>"+esc(t.State)+"</td><td>"+esc(t.Author)+"</td><td class='message'>"+esc(t.Description)+"</td></tr>").join(""),5);
+ }catch(e){document.getElementById("risk-detail").textContent="Telemetry error: "+e}
+}
+
+async function changes(){
+ try{
+  const c=await fetch("/api/changes").then(r=>r.json());
+  document.getElementById("changes-grid").innerHTML=[
+   metric("NEW PROCESSES",c.new_processes?.length||0),metric("ENDED PROCESSES",c.ended_processes?.length||0),
+   metric("NEW CONNECTIONS",c.new_connections?.length||0),metric("ENDED CONNECTIONS",c.ended_connections?.length||0),
+   metric("SERVICE CHANGES",c.service_changes?.length||0),metric("NEW STARTUP",c.new_startup_items?.length||0)
+  ].join("");
+  const live=await fetch("/api/findings/live").then(r=>r.json());
+  document.getElementById("live-findings").innerHTML=(live||[]).map(f=>"<div class='finding "+esc(f.severity||"info")+"'><b>"+esc(f.severity||"info").toUpperCase()+"</b><span>"+esc(f.reason||f.message||"Finding")+"</span></div>").join("")||"<div class='finding good'><b>CLEAR</b><span>No live changes requiring attention.</span></div>";
+ }catch(e){}
+}
+
+async function inventory(){
+ try{
+  const d=await fetch("/api/inventory").then(r=>r.json());
+  document.getElementById("inventory-content").innerHTML=[
+   invScalar("Operating System",d.os_detail),invScalar("Computer Product",d.computer_product),
+   invScalar("Computer",d.computer),invScalar("Chassis",d.chassis),invScalar("CPU",d.cpu),
+   invSection("Memory Modules",d.memory_modules||[]),invScalar("Motherboard",d.motherboard),invScalar("BIOS",d.bios_detail),
+   invSection("GPUs",d.gpu_detail||[]),invSection("Monitors",d.monitors||[]),invSection("Audio Devices",d.audio_devices||[]),
+   invSection("Keyboards",d.keyboards||[]),invSection("Pointing Devices",d.pointing_devices||[]),
+   invSection("Physical Disks",d.disks||[]),invSection("Physical Disk Health",d.physical_disk_health||[]),
+   invSection("Storage Pools",d.storage_pools||[]),invSection("Logical Volumes",d.volumes||[]),invSection("Page Files",d.page_files||[]),
+   invSection("Network Adapters",d.network_adapters||[]),invSection("DNS Configuration",d.dns_config||[]),invSection("Network Profiles",d.network_profiles||[]),
+   invSection("IP Configuration",d.ip_config||[]),invSection("Routing Table",d.routes||[]),invSection("ARP / Neighbors",d.arp||[]),
+   invSection("Firewall Rules",d.firewall_rules_summary||[]),invSection("Defender Preferences",d.defender_preferences||[]),invSection("Local Users",d.users||[]),
+   invSection("Local Groups",d.local_groups||[]),invSection("Administrators",d.admin_members||[]),invSection("Installed Software",d.installed_software||[]),
+   invSection("Windows Hotfixes",d.hotfixes||[]),invSection("Signed Drivers",d.drivers||[]),invSection("Printers",d.printers||[]),invSection("USB Devices",d.usb_devices||[]),
+   invSection("SMB Shares",d.shares||[]),invSection("BitLocker Volumes",d.bitlocker||[]),invScalar("TPM",d.tpm),invScalar("Secure Boot",d.secure_boot),
+   invScalar("Virtualization",d.virtualization),invScalar("Power Plan",d.power_plan),invScalar("Boot Configuration",d.boot_config),
+   invScalar("Audit Policy",d.audit_policy),invSection("Restore Points",d.restore_points||[]),
+   invSection("Optional Windows Features",d.optional_features||[]),invScalar("Environment",d.environment),invScalar("Python Runtime",d.python)
+  ].join("");
+ }catch(e){document.getElementById("inventory-content").innerHTML="<div class='emptybox'>Inventory error: "+esc(e)+"</div>"}
+}
+
+async function advanced(){
+ try{
+  const d=await fetch("/api/advanced").then(r=>r.json());
+  const list=v=>Array.isArray(v)?v:(v&&typeof v==="object"?[v]:[]);
+  const batteries=list(d.battery), products=list(d.security_products), updates=list(d.update_services), counts=list(d.event_counts_24h), crashes=list(d.reliability_events);
+  const b=batteries[0]||{};
+  const t=d.time_sync||{};
+  document.getElementById("advanced-grid").innerHTML=[
+   card("BATTERY",b.EstimatedChargeRemaining==null?"N/A":b.EstimatedChargeRemaining+"%"),
+   card("BATTERY STATUS",b.Status||"N/A"),
+   card("EST. RUNTIME",b.EstimatedRunTime==null?"N/A":b.EstimatedRunTime+" min"),
+   card("SECURITY PRODUCTS",products.length),
+   card("UPDATE SERVICE HEALTH",updates.filter(x=>String(x.State).toLowerCase()==="running").length+"/"+updates.length+" running"),
+   card("CRASH / WER EVENTS",crashes.length),
+   card("EVENT LOG ROWS",counts.length),
+   card("TIME SOURCE",t.source||"Unavailable")
+  ].join("");
+  document.getElementById("advanced-security").innerHTML=invSection("Windows Security Center Products",products);
+  setRows("update-services",(updates).map(s=>"<tr><td>"+esc(s.Name)+"</td><td><span class='chip'>"+esc(s.State)+"</span></td><td>"+esc(s.StartMode)+"</td><td>"+esc(s.ProcessId)+"</td><td>"+esc(s.StartName)+"</td></tr>").join(""),5);
+  setRows("event-counts",(counts).map(v=>"<tr><td>"+esc(v.Log)+"</td><td>"+esc(v.Level)+"</td><td>"+esc(v.Count)+"</td><td>"+esc(v.WindowHours)+"h</td></tr>").join(""),4);
+  setRows("reliability-events",(crashes).map(v=>"<tr><td>"+esc(v.TimeCreated)+"</td><td>"+esc(v.Id)+"</td><td>"+esc(v.ProviderName)+"</td><td>"+esc(v.LevelDisplayName)+"</td><td class='message'>"+esc(v.Message)+"</td></tr>").join(""),5);
+  document.getElementById("time-sync").textContent=(t.source||"Source unavailable")+"\\n\\n"+(t.status||"Status unavailable");
+  document.getElementById("power-capabilities").textContent=d.power_capabilities||"Unavailable";
+ }catch(e){document.getElementById("advanced-grid").innerHTML="<div class='emptybox'>Deep telemetry error: "+esc(e)+"</div>"}
+}
+
+async function history(){
+ try{
+  const [h,f]=await Promise.all([fetch("/api/history").then(r=>r.json()),fetch("/api/findings").then(r=>r.json())]);
+  setRows("history-table",h.map(v=>"<tr><td>"+esc(v.captured_at)+"</td><td>"+v.cpu+"%</td><td>"+v.memory+"%</td><td>"+v.disk+"%</td><td>"+v.process_count+"</td><td>"+v.connection_count+"</td><td>"+v.risk_score+" / "+esc(v.risk_level)+"</td></tr>").join(""),7);
+  setRows("findings-table",f.map(v=>"<tr><td>"+esc(v.captured_at)+"</td><td>"+esc(v.severity)+"</td><td>"+esc(v.reason)+"</td></tr>").join(""),3);
+  drawChart(h.slice().reverse().slice(-40));
+ }catch(e){drawChart([])}
+}
+
+document.getElementById("process-filter").oninput=()=>filterTable(document.getElementById("process-filter"),"procs");
+document.getElementById("network-filter").oninput=()=>filterTable(document.getElementById("network-filter"),"net");
+document.getElementById("service-filter").oninput=()=>filterTable(document.getElementById("service-filter"),"services-table");
+document.getElementById("task-filter").oninput=()=>filterTable(document.getElementById("task-filter"),"tasks-table");
+load();changes();inventory();advanced();history();
+setInterval(load,5000);setInterval(changes,5000);setInterval(inventory,30000);setInterval(advanced,15000);setInterval(history,10000);
+window.addEventListener("resize",()=>history());
+</script>
+</body>
+</html>
