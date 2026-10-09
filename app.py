@@ -7,6 +7,7 @@ from forensics import build_findings
 from correlation import correlate_process_network
 from sessions import logged_on_sessions
 from scheduled_tasks import scheduled_tasks
+from inventory import inventory
 import os
 
 app = Flask(__name__)
@@ -61,6 +62,10 @@ def api_history():
 @app.get("/api/findings")
 def api_findings():
     return jsonify(findings())
+
+@app.get("/api/inventory")
+def api_inventory():
+    return jsonify(inventory())
 
 @app.get("/api/health")
 def health():
