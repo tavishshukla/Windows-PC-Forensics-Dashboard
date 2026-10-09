@@ -5,7 +5,7 @@
 <header class="topbar"><div><h1>WINDOWS PC FORENSICS</h1><p id="host">Loading host telemetry...</p></div><div class="top-actions"><span class="badge">READ-ONLY</span><span id="last-update">Updating...</span></div></header>
 <div class="layout">
 <aside class="sidebar"><div class="side-title">FORENSICS</div>
-<a href="#overview">Overview</a><a href="#identity">System</a><a href="#security">Security</a><a href="#processes">Processes</a><a href="#network">Network</a><a href="#services">Services</a><a href="#startup">Persistence</a><a href="#events">Events</a><a href="#sessions">Sessions</a><a href="#tasks">Scheduled Tasks</a><a href="#history">History</a>
+<a href="#overview">Overview</a><a href="#identity">System</a><a href="#security">Security</a><a href="#processes">Processes</a><a href="#network">Network</a><a href="#services">Services</a><a href="#startup">Persistence</a><a href="#events">Events</a><a href="#sessions">Sessions</a><a href="#tasks">Scheduled Tasks</a><a href="#inventory">Full Inventory</a><a href="#history">History</a>
 <div class="side-note">LOCAL MACHINE ONLY<br>NO CHANGES ARE MADE</div></aside>
 <main>
 <section id="overview" class="hero"><div><span class="eyebrow">LIVE HOST OVERVIEW</span><h2 id="risk-title">Risk assessment loading</h2><p id="risk-detail">Collecting read-only telemetry from this PC.</p></div><div id="risk-score" class="risk-score">—</div></section>
@@ -29,7 +29,8 @@
 
 <section id="tasks"><div class="section-head"><div><span class="eyebrow">10</span><h2>Scheduled Tasks</h2><p>Task metadata for persistence and configuration review.</p></div><input id="task-filter" placeholder="Filter tasks..."></div><table><thead><tr><th>Name</th><th>Path</th><th>State</th><th>Author</th><th>Description</th></tr></thead><tbody id="tasks-table"></tbody></table></section>
 
-<section id="history"><div class="section-head"><div><span class="eyebrow">11</span><h2>Historical Telemetry</h2><p>Snapshots stored locally in SQLite for trend review.</p></div></div><table><thead><tr><th>Time</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Processes</th><th>Connections</th><th>Risk</th></tr></thead><tbody id="history-table"></tbody></table>
+<section id="inventory"><div class="section-head"><div><span class="eyebrow">11</span><h2>Full PC Inventory</h2><p>Read-only inventory of hardware, devices, software, networking, users, updates and drivers.</p></div></div><div id="inventory-content" class="inventory-grid"><div class="emptybox">Loading complete inventory...</div></div></section>
+<section id="history"><div class="section-head"><div><span class="eyebrow">12</span><h2>Historical Telemetry</h2><p>Snapshots stored locally in SQLite for trend review.</p></div></div><table><thead><tr><th>Time</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Processes</th><th>Connections</th><th>Risk</th></tr></thead><tbody id="history-table"></tbody></table>
 <h3>Finding History</h3><table><thead><tr><th>Time</th><th>Severity</th><th>Finding</th></tr></thead><tbody id="findings-table"></tbody></table></section>
 </main></div>
 
@@ -79,6 +80,24 @@ async function load(){
   setRows("tasks-table",(tasks||[]).slice(0,300).map(t=>"<tr><td>"+esc(t.TaskName)+"</td><td>"+esc(t.TaskPath)+"</td><td>"+esc(t.State)+"</td><td>"+esc(t.Author)+"</td><td class='message'>"+esc(t.Description)+"</td></tr>").join(""),5);
  }catch(err){document.getElementById("host").textContent="Telemetry error: "+err}
 }
+async function inventory(){
+ try{
+  const d=await fetch("/api/inventory").then(r=>r.json());
+  const section=(title,key,items)=>"<div class='inv-section'><h3>"+esc(title)+" <span>"+items.length+"</span></h3><div class='inv-list'>"+(items.length?items.map(o=>"<div class='inv-row'>"+Object.entries(o).map(([k,v])=>"<div><small>"+esc(k)+"</small><b>"+esc(typeof v==="object"?JSON.stringify(v):v)+"</b></div>").join("")+"</div>").join(""):"<div class='emptybox'>No data returned</div>")+"</div></div>";
+  const scalar=(title,obj)=>section(title,"",obj&&typeof obj==="object"&&!Array.isArray(obj)?[obj]:[]);
+  document.getElementById("inventory-content").innerHTML=[
+   scalar("Computer",d.computer),scalar("CPU",d.cpu),section("Memory Modules","memory_modules",d.memory_modules||[]),
+   scalar("Motherboard",d.motherboard),scalar("BIOS",d.bios_detail),section("GPUs","gpu_detail",d.gpu_detail||[]),
+   section("Physical Disks","disks",d.disks||[]),section("Logical Volumes","volumes",d.volumes||[]),
+   section("Network Adapters","network_adapters",d.network_adapters||[]),section("IP Configuration","ip_config",d.ip_config||[]),
+   section("Routing Table","routes",d.routes||[]),section("ARP / Neighbor Table","arp",d.arp||[]),
+   section("Local Users","users",d.users||[]),section("Local Groups","local_groups",d.local_groups||[]),
+   section("Installed Software","installed_software",d.installed_software||[]),section("Windows Hotfixes","hotfixes",d.hotfixes||[]),
+   section("Signed Drivers","drivers",d.drivers||[]),section("Printers","printers",d.printers||[]),
+   section("USB Devices","usb_devices",d.usb_devices||[]),scalar("Environment",d.environment),scalar("Python Runtime",d.python)
+  ].join("");
+ }catch(e){document.getElementById("inventory-content").innerHTML="<div class='emptybox'>Inventory error: "+esc(e)+"</div>"}
+}
 async function changes(){
  try{const c=await fetch("/api/changes").then(r=>r.json());
   document.getElementById("changes-grid").innerHTML=[
@@ -101,5 +120,5 @@ document.getElementById("process-filter").oninput=()=>filterTable(document.getEl
 document.getElementById("network-filter").oninput=()=>filterTable(document.getElementById("network-filter"),"net");
 document.getElementById("service-filter").oninput=()=>filterTable(document.getElementById("service-filter"),"services-table");
 document.getElementById("task-filter").oninput=()=>filterTable(document.getElementById("task-filter"),"tasks-table");
-load();changes();history();setInterval(load,5000);setInterval(changes,5000);setInterval(history,10000);
+load();changes();inventory();history();setInterval(load,5000);setInterval(changes,5000);setInterval(history,10000);
 </script></body></html>
