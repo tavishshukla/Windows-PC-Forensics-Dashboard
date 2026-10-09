@@ -8,6 +8,7 @@ from correlation import correlate_process_network
 from sessions import logged_on_sessions
 from scheduled_tasks import scheduled_tasks
 from inventory import inventory
+from advanced_telemetry import advanced_telemetry
 import os
 
 app = Flask(__name__)
@@ -66,6 +67,10 @@ def api_findings():
 @app.get("/api/inventory")
 def api_inventory():
     return jsonify(inventory())
+
+@app.get("/api/advanced")
+def api_advanced():
+    return jsonify(advanced_telemetry())
 
 @app.get("/api/health")
 def health():
