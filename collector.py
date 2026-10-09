@@ -123,7 +123,7 @@ def snapshot():
     io = psutil.net_io_counters()
     disk_path = os.environ.get("SystemDrive", "C:") + "\\"
     procs = []
-    for p in psutil.process_iter(["pid", "ppid", "name", "username", "status", "exe", "memory_info", "create_time"]):
+    for p in psutil.process_iter(["pid", "ppid", "name", "username", "status", "exe", "memory_info", "create_time", "num_threads", "cpu_times"]):
         try:
             i = p.info
             m = i.get("memory_info")
@@ -132,6 +132,9 @@ def snapshot():
                 "user": i.get("username"), "status": i.get("status"),
                 "exe": i.get("exe"), "ram_mb": round((m.rss if m else 0) / 1048576, 1),
                 "started": datetime.fromtimestamp(i["create_time"]).isoformat(timespec="seconds") if i.get("create_time") else None,
+                "threads": i.get("num_threads"),
+                "cpu_user_seconds": round(i.get("cpu_times").user, 2) if i.get("cpu_times") else None,
+                "cpu_system_seconds": round(i.get("cpu_times").system, 2) if i.get("cpu_times") else None,
             })
         except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
             pass
