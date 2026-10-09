@@ -71,7 +71,7 @@
 
 <section id="processes" class="panel">
   <div class="section-head"><div><div class="eyebrow">04 / PROCESS INTELLIGENCE</div><h2>Running Processes</h2><p>PID, parent PID, owner, RAM, start time and executable location.</p></div><input id="process-filter" placeholder="Search process, user or path"></div>
-  <div class="table-shell"><table><thead><tr><th>PID</th><th>Process</th><th>PPID</th><th>User</th><th>RAM</th><th>Threads</th><th>CPU Time</th><th>Status</th><th>Started</th><th>Executable</th></tr></thead><tbody id="procs"></tbody></table></div>
+  <div class="table-shell"><table><thead><tr><th>PID</th><th>Process</th><th>PPID</th><th>User</th><th>RAM</th><th>RAM %</th><th>Threads</th><th>CPU Time</th><th>I/O Read</th><th>I/O Write</th><th>Status</th><th>Started</th><th>Executable</th></tr></thead><tbody id="procs"></tbody></table></div>
 </section>
 
 <section id="network" class="panel">
@@ -198,7 +198,7 @@ async function load(){
    card("SIGNATURE UPDATE",d.AntivirusSignatureLastUpdated||"Unavailable")
   ].join("");
   document.getElementById("risk-findings").innerHTML=(risk.findings||[]).map(f=>"<div class='finding "+esc(f.severity)+"'><b>"+esc(f.severity).toUpperCase()+"</b><span>"+esc(f.reason)+"</span></div>").join("")||"<div class='finding good'><b>GOOD</b><span>No current risk findings.</span></div>";
-  setRows("procs",(x.processes||[]).map(p=>"<tr><td>"+p.pid+"</td><td><b>"+esc(p.name)+"</b></td><td>"+(p.ppid??"")+"</td><td>"+esc(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+esc(p.threads??"")+"</td><td>"+esc(((Number(p.cpu_user_seconds)||0)+(Number(p.cpu_system_seconds)||0)).toFixed(2))+" s</td><td><span class='chip'>"+esc(p.status)+"</span></td><td>"+esc(p.started)+"</td><td class='path'>"+esc(p.exe)+"</td></tr>").join(""),10);
+  setRows("procs",(x.processes||[]).map(p=>"<tr><td>"+p.pid+"</td><td><b>"+esc(p.name)+"</b></td><td>"+(p.ppid??"")+"</td><td>"+esc(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+esc(p.memory_percent??"")+"</td><td>"+esc(p.threads??"")+"</td><td>"+esc(((Number(p.cpu_user_seconds)||0)+(Number(p.cpu_system_seconds)||0)).toFixed(2))+" s</td><td>"+bytes(p.io_read_bytes)+"</td><td>"+bytes(p.io_write_bytes)+"</td><td><span class='chip'>"+esc(p.status)+"</span></td><td>"+esc(p.started)+"</td><td class='path'>"+esc(p.exe)+"</td></tr>").join(""),13);
   const corr=await fetch("/api/correlation").then(r=>r.json());const cmap={};(corr||[]).forEach(v=>cmap[v.pid]=v);
   const conns=x.connections||[];
   setRows("net",conns.map(c=>"<tr><td>"+(c.pid??"")+"</td><td>"+esc(c.local)+"</td><td>"+esc(c.remote)+"</td><td>"+esc(c.family)+"</td><td>"+esc(c.status)+"</td><td>"+esc(cmap[c.pid]?.process||"Unknown")+"</td><td>"+esc(cmap[c.pid]?.user||"Unknown")+"</td></tr>").join(""),7);
