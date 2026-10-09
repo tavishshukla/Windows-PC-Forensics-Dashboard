@@ -219,13 +219,14 @@ async function inventory(){
    invSection("Keyboards",d.keyboards||[]),invSection("Pointing Devices",d.pointing_devices||[]),
    invSection("Physical Disks",d.disks||[]),invSection("Physical Disk Health",d.physical_disk_health||[]),
    invSection("Storage Pools",d.storage_pools||[]),invSection("Logical Volumes",d.volumes||[]),invSection("Page Files",d.page_files||[]),
-   invSection("Network Adapters",d.network_adapters||[]),invSection("Network Profiles",d.network_profiles||[]),
+   invSection("Network Adapters",d.network_adapters||[]),invSection("DNS Configuration",d.dns_config||[]),invSection("Network Profiles",d.network_profiles||[]),
    invSection("IP Configuration",d.ip_config||[]),invSection("Routing Table",d.routes||[]),invSection("ARP / Neighbors",d.arp||[]),
-   invSection("Firewall Rules",d.firewall_rules_summary||[]),invSection("Local Users",d.users||[]),invSection("Local Groups",d.local_groups||[]),
-   invSection("Installed Software",d.installed_software||[]),invSection("Windows Hotfixes",d.hotfixes||[]),
-   invSection("Signed Drivers",d.drivers||[]),invSection("Printers",d.printers||[]),invSection("USB Devices",d.usb_devices||[]),
-   invSection("SMB Shares",d.shares||[]),invSection("BitLocker Volumes",d.bitlocker||[]),invScalar("TPM",d.tpm),
-   invScalar("Secure Boot",d.secure_boot),invScalar("Power Plan",d.power_plan),
+   invSection("Firewall Rules",d.firewall_rules_summary||[]),invSection("Defender Preferences",d.defender_preferences||[]),invSection("Local Users",d.users||[]),
+   invSection("Local Groups",d.local_groups||[]),invSection("Administrators",d.admin_members||[]),invSection("Installed Software",d.installed_software||[]),
+   invSection("Windows Hotfixes",d.hotfixes||[]),invSection("Signed Drivers",d.drivers||[]),invSection("Printers",d.printers||[]),invSection("USB Devices",d.usb_devices||[]),
+   invSection("SMB Shares",d.shares||[]),invSection("BitLocker Volumes",d.bitlocker||[]),invScalar("TPM",d.tpm),invScalar("Secure Boot",d.secure_boot),
+   invScalar("Virtualization",d.virtualization),invScalar("Power Plan",d.power_plan),invScalar("Boot Configuration",d.boot_config),
+   invScalar("Audit Policy",d.audit_policy),invSection("Restore Points",d.restore_points||[]),
    invSection("Optional Windows Features",d.optional_features||[]),invScalar("Environment",d.environment),invScalar("Python Runtime",d.python)
   ].join("");
  }catch(e){document.getElementById("inventory-content").innerHTML="<div class='emptybox'>Inventory error: "+esc(e)+"</div>"}
