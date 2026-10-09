@@ -212,15 +212,21 @@ async function inventory(){
  try{
   const d=await fetch("/api/inventory").then(r=>r.json());
   document.getElementById("inventory-content").innerHTML=[
-   invScalar("Computer",d.computer),invScalar("CPU",d.cpu),invSection("Memory Modules",d.memory_modules||[]),
-   invScalar("Motherboard",d.motherboard),invScalar("BIOS",d.bios_detail),invSection("GPUs",d.gpu_detail||[]),
-   invSection("Physical Disks",d.disks||[]),invSection("Logical Volumes",d.volumes||[]),
-   invSection("Network Adapters",d.network_adapters||[]),invSection("IP Configuration",d.ip_config||[]),
-   invSection("Routing Table",d.routes||[]),invSection("ARP / Neighbors",d.arp||[]),
-   invSection("Local Users",d.users||[]),invSection("Local Groups",d.local_groups||[]),
+   invScalar("Operating System",d.os_detail),invScalar("Computer Product",d.computer_product),
+   invScalar("Computer",d.computer),invScalar("Chassis",d.chassis),invScalar("CPU",d.cpu),
+   invSection("Memory Modules",d.memory_modules||[]),invScalar("Motherboard",d.motherboard),invScalar("BIOS",d.bios_detail),
+   invSection("GPUs",d.gpu_detail||[]),invSection("Monitors",d.monitors||[]),invSection("Audio Devices",d.audio_devices||[]),
+   invSection("Keyboards",d.keyboards||[]),invSection("Pointing Devices",d.pointing_devices||[]),
+   invSection("Physical Disks",d.disks||[]),invSection("Physical Disk Health",d.physical_disk_health||[]),
+   invSection("Storage Pools",d.storage_pools||[]),invSection("Logical Volumes",d.volumes||[]),invSection("Page Files",d.page_files||[]),
+   invSection("Network Adapters",d.network_adapters||[]),invSection("Network Profiles",d.network_profiles||[]),
+   invSection("IP Configuration",d.ip_config||[]),invSection("Routing Table",d.routes||[]),invSection("ARP / Neighbors",d.arp||[]),
+   invSection("Firewall Rules",d.firewall_rules_summary||[]),invSection("Local Users",d.users||[]),invSection("Local Groups",d.local_groups||[]),
    invSection("Installed Software",d.installed_software||[]),invSection("Windows Hotfixes",d.hotfixes||[]),
-   invSection("Signed Drivers",d.drivers||[]),invSection("Printers",d.printers||[]),
-   invSection("USB Devices",d.usb_devices||[]),invScalar("Environment",d.environment),invScalar("Python Runtime",d.python)
+   invSection("Signed Drivers",d.drivers||[]),invSection("Printers",d.printers||[]),invSection("USB Devices",d.usb_devices||[]),
+   invSection("SMB Shares",d.shares||[]),invSection("BitLocker Volumes",d.bitlocker||[]),invScalar("TPM",d.tpm),
+   invScalar("Secure Boot",d.secure_boot),invScalar("Power Plan",d.power_plan),
+   invSection("Optional Windows Features",d.optional_features||[]),invScalar("Environment",d.environment),invScalar("Python Runtime",d.python)
   ].join("");
  }catch(e){document.getElementById("inventory-content").innerHTML="<div class='emptybox'>Inventory error: "+esc(e)+"</div>"}
 }
