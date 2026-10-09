@@ -1,11 +1,6 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Windows PC Forensics Dashboard</title><link rel="stylesheet" href="/static/style.css"></head>
-<body>
-<header><div><h1>WINDOWS PC FORENSICS</h1><p id="host">Loading host telemetry...</p></div><span class="badge">READ-ONLY LOCAL MONITOR</span></header>
-<main>
-<div id="stats" class="stats"></div>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Windows PC Forensics Dashboard</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><div><h1>WINDOWS PC FORENSICS</h1><p id="host">Loading host telemetry...</p></div><span class="badge">READ-ONLY LOCAL MONITOR</span></header><main>
+<div id="risk"></div><div id="stats" class="stats"></div>
 <section><h2>System Identity</h2><div id="identity" class="grid"></div></section>
 <section><h2>Security Posture</h2><div id="security" class="grid"></div></section>
 <section><h2>Live Changes</h2><div id="changes" class="changes"></div></section>
@@ -14,31 +9,18 @@
 <section><h2>Windows Services</h2><table><thead><tr><th>Name</th><th>Display Name</th><th>Status</th><th>Start Type</th></tr></thead><tbody id="services"></tbody></table></section>
 <section><h2>Startup Registry Entries</h2><table><thead><tr><th>Location</th><th>Name</th><th>Command</th></tr></thead><tbody id="startup"></tbody></table></section>
 <section><h2>Recent Windows Events</h2><table><thead><tr><th>Time</th><th>Log</th><th>ID</th><th>Level</th><th>Provider</th><th>Message</th></tr></thead><tbody id="events"></tbody></table></section>
-</main>
-<script>
+</main><script>
 const e=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const card=(k,v)=>"<div class='card'><small>"+e(k)+"</small><strong>"+e(v)+"</strong></div>";
 const rows=(id,html)=>document.getElementById(id).innerHTML=html||"<tr><td colspan='9'>No data available</td></tr>";
 const change=(label,n)=>"<div class='change'><b>"+e(label)+"</b><span>"+n+"</span></div>";
-
 async function load(){
  try{
-  const x=await fetch("/api/snapshot").then(r=>r.json()), w=x.windows||{}, d=w.defender||{};
+  const x=await fetch("/api/snapshot").then(r=>r.json()),w=x.windows||{},d=w.defender||{};
   document.getElementById("host").textContent=x.host+" • "+x.os;
-  document.getElementById("stats").innerHTML=[
-   card("CPU",x.cpu+"%"),card("RAM",x.memory+"%"),card("SYSTEM DISK",x.disk+"%"),
-   card("CPU CORES",(x.cpu_cores??"—")+" / "+(x.cpu_threads??"—")+" threads"),
-   card("PROCESSES",x.processes.length),card("CONNECTIONS",x.connections.length)].join("");
-  document.getElementById("identity").innerHTML=[
-   card("MANUFACTURER",w.manufacturer),card("MODEL",w.model),card("WINDOWS",w.windows_version),
-   card("BUILD",w.build),card("BIOS",w.bios),card("BIOS VERSION",w.bios_version),
-   card("GPU",(w.gpu||[]).map(g=>g.Name).filter(Boolean).join(", ")||"Unavailable"),
-   card("UPTIME",Math.floor(x.uptime/3600)+"h "+Math.floor((x.uptime%3600)/60)+"m")].join("");
-  document.getElementById("security").innerHTML=[
-   card("DEFENDER SERVICE",d.AMServiceEnabled===true?"Enabled":d.AMServiceEnabled===false?"Disabled":"Unavailable"),
-   card("ANTIVIRUS",d.AntivirusEnabled===true?"Enabled":d.AntivirusEnabled===false?"Disabled":"Unavailable"),
-   card("REAL-TIME PROTECTION",d.RealTimeProtectionEnabled===true?"Enabled":d.RealTimeProtectionEnabled===false?"Disabled":"Unavailable"),
-   card("FIREWALL PROFILES",(w.firewall||[]).filter(f=>f.Enabled).map(f=>f.Name).join(", ")||"Unavailable")].join("");
+  document.getElementById("stats").innerHTML=[card("CPU",x.cpu+"%"),card("RAM",x.memory+"%"),card("SYSTEM DISK",x.disk+"%"),card("CPU CORES",(x.cpu_cores??"—")+" / "+(x.cpu_threads??"—")+" threads"),card("PROCESSES",x.processes.length),card("CONNECTIONS",x.connections.length)].join("");
+  document.getElementById("identity").innerHTML=[card("MANUFACTURER",w.manufacturer),card("MODEL",w.model),card("WINDOWS",w.windows_version),card("BUILD",w.build),card("BIOS",w.bios),card("BIOS VERSION",w.bios_version),card("GPU",(w.gpu||[]).map(g=>g.Name).filter(Boolean).join(", ")||"Unavailable"),card("UPTIME",Math.floor(x.uptime/3600)+"h "+Math.floor((x.uptime%3600)/60)+"m")].join("");
+  document.getElementById("security").innerHTML=[card("DEFENDER SERVICE",d.AMServiceEnabled===true?"Enabled":d.AMServiceEnabled===false?"Disabled":"Unavailable"),card("ANTIVIRUS",d.AntivirusEnabled===true?"Enabled":d.AntivirusEnabled===false?"Disabled":"Unavailable"),card("REAL-TIME PROTECTION",d.RealTimeProtectionEnabled===true?"Enabled":d.RealTimeProtectionEnabled===false?"Disabled":"Unavailable"),card("FIREWALL PROFILES",(w.firewall||[]).filter(f=>f.Enabled).map(f=>f.Name).join(", ")||"Unavailable")].join("");
   rows("procs",x.processes.map(p=>"<tr><td>"+p.pid+"</td><td>"+e(p.name)+"</td><td>"+(p.ppid??"")+"</td><td>"+e(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+e(p.status)+"</td><td>"+e(p.started)+"</td><td>"+e(p.exe)+"</td></tr>").join(""));
   rows("net",x.connections.map(c=>"<tr><td>"+(c.pid??"")+"</td><td>"+e(c.local)+"</td><td>"+e(c.remote)+"</td><td>"+e(c.family)+"</td><td>"+e(c.status)+"</td></tr>").join(""));
   rows("services",(x.services||[]).slice(0,200).map(s=>"<tr><td>"+e(s.Name)+"</td><td>"+e(s.DisplayName)+"</td><td>"+e(s.Status)+"</td><td>"+e(s.StartType)+"</td></tr>").join(""));
@@ -46,16 +28,7 @@ async function load(){
   rows("events",(x.events||[]).map(v=>"<tr><td>"+e(v.Time)+"</td><td>"+e(v.Log)+"</td><td>"+e(v.Id)+"</td><td>"+e(v.Level)+"</td><td>"+e(v.Provider)+"</td><td>"+e(v.Message)+"</td></tr>").join(""));
  }catch(err){document.getElementById("host").textContent="Telemetry error: "+err;}
 }
-async function loadChanges(){
- try{
-  const c=await fetch("/api/changes").then(r=>r.json());
-  document.getElementById("changes").innerHTML=[
-   change("New processes",c.new_processes.length),change("Ended processes",c.ended_processes.length),
-   change("New connections",c.new_connections.length),change("Ended connections",c.ended_connections.length),
-   change("Service changes",c.service_changes.length),change("New startup items",c.new_startup_items.length),
-   change("Removed startup items",c.ended_startup_items.length)].join("");
- }catch(err){document.getElementById("changes").textContent="Change tracker unavailable";}
-}
-load(); loadChanges(); setInterval(load,5000); setInterval(loadChanges,5000);
-</script>
-</body></html>
+async function loadChanges(){try{const c=await fetch("/api/changes").then(r=>r.json());document.getElementById("changes").innerHTML=[change("New processes",c.new_processes.length),change("Ended processes",c.ended_processes.length),change("New connections",c.new_connections.length),change("Ended connections",c.ended_connections.length),change("Service changes",c.service_changes.length),change("New startup items",c.new_startup_items.length),change("Removed startup items",c.ended_startup_items.length)].join("");}catch(e){document.getElementById("changes").textContent="Change tracker unavailable";}}
+async function loadRisk(){try{const r=await fetch("/api/risk").then(x=>x.json());document.getElementById("risk").innerHTML=card("LOCAL TELEMETRY RISK",r.score+"/100 • "+r.level.toUpperCase())+(r.findings||[]).map(f=>"<div class='finding'><b>"+e(f.severity)+"</b> "+e(f.reason)+"</div>").join("");}catch(e){document.getElementById("risk").textContent="Risk assessment unavailable";}}
+load();loadChanges();loadRisk();setInterval(load,5000);setInterval(loadChanges,5000);setInterval(loadRisk,10000);
+</script></body></html>
