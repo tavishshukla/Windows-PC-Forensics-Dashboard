@@ -1,1 +1,116 @@
-<!doctype html><html><head><meta charset="utf-8"><title>PC Forensics</title><link rel="stylesheet" href="/static/style.css"></head><body><header><h1>PC FORENSICS DASHBOARD</h1><span>● READ-ONLY LOCAL MONITOR</span><p id="host"></p></header><main><div id="stats"></div><section><h2>Top Processes</h2><table><thead><tr><th>PID</th><th>Process</th><th>User</th><th>RAM</th><th>Status</th><th>Path</th></tr></thead><tbody id="procs"></tbody></table></section><section><h2>Network Connections</h2><table><thead><tr><th>PID</th><th>Local</th><th>Remote</th><th>Status</th></tr></thead><tbody id="net"></tbody></table></section></main><script>const e=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));async function load(){let x=await fetch("/api/snapshot").then(r=>r.json());document.getElementById("host").textContent=x.host+" • "+x.os;document.getElementById("stats").innerHTML=["CPU "+x.cpu+"%","RAM "+x.memory+"%","DISK "+x.disk+"%","PROCESSES "+x.processes.length,"CONNECTIONS "+x.connections.length].map(v=>"<b>"+v+"</b>").join("");document.getElementById("procs").innerHTML=x.processes.map(p=>"<tr><td>"+p.pid+"</td><td>"+e(p.name)+"</td><td>"+e(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+e(p.status)+"</td><td>"+e(p.exe)+"</td></tr>").join("");document.getElementById("net").innerHTML=x.connections.map(c=>"<tr><td>"+(c.pid??"")+"</td><td>"+e(c.local)+"</td><td>"+e(c.remote)+"</td><td>"+e(c.status)+"</td></tr>").join("")}load();setInterval(load,3000)</script></body></html>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Windows PC Forensics Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>WINDOWS PC FORENSICS</h1>
+    <p id="host">Loading host telemetry...</p>
+  </div>
+  <span class="badge">READ-ONLY LOCAL MONITOR</span>
+</header>
+
+<main>
+  <div id="stats" class="stats"></div>
+
+  <section>
+    <h2>System Identity</h2>
+    <div id="identity" class="grid"></div>
+  </section>
+
+  <section>
+    <h2>Security Posture</h2>
+    <div id="security" class="grid"></div>
+  </section>
+
+  <section>
+    <h2>Top Processes</h2>
+    <table><thead><tr><th>PID</th><th>Process</th><th>PPID</th><th>User</th><th>RAM</th><th>Status</th><th>Started</th><th>Path</th></tr></thead>
+    <tbody id="procs"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Network Connections</h2>
+    <table><thead><tr><th>PID</th><th>Local</th><th>Remote</th><th>Family</th><th>Status</th></tr></thead>
+    <tbody id="net"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Windows Services</h2>
+    <table><thead><tr><th>Name</th><th>Display Name</th><th>Status</th><th>Start Type</th></tr></thead>
+    <tbody id="services"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Startup Registry Entries</h2>
+    <table><thead><tr><th>Location</th><th>Name</th><th>Command</th></tr></thead>
+    <tbody id="startup"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Recent Windows Events</h2>
+    <table><thead><tr><th>Time</th><th>Log</th><th>ID</th><th>Level</th><th>Provider</th><th>Message</th></tr></thead>
+    <tbody id="events"></tbody></table>
+  </section>
+</main>
+
+<script>
+const e = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => n == null ? "—" : Number(n).toLocaleString();
+const card = (k,v) => "<div class='card'><small>"+e(k)+"</small><strong>"+e(v)+"</strong></div>";
+const rows = (id, html) => document.getElementById(id).innerHTML = html || "<tr><td colspan='9'>No data available</td></tr>";
+
+async function load(){
+  try {
+    const r = await fetch("/api/snapshot");
+    const x = await r.json();
+
+    document.getElementById("host").textContent = x.host+" • "+x.os;
+    document.getElementById("stats").innerHTML = [
+      card("CPU",x.cpu+"%"),
+      card("RAM",x.memory+"%"),
+      card("SYSTEM DISK",x.disk+"%"),
+      card("CPU CORES",x.cpu_cores+" / "+x.cpu_threads+" threads"),
+      card("PROCESSES",fmt(x.processes.length)),
+      card("CONNECTIONS",fmt(x.connections.length))
+    ].join("");
+
+    const w=x.windows||{};
+    document.getElementById("identity").innerHTML=[
+      card("MANUFACTURER",w.manufacturer),
+      card("MODEL",w.model),
+      card("WINDOWS",w.windows_version),
+      card("BUILD",w.build),
+      card("BIOS",w.bios),
+      card("BIOS VERSION",w.bios_version),
+      card("GPU",(w.gpu||[]).map(g=>g.Name).filter(Boolean).join(", ")||"Unavailable"),
+      card("UPTIME",Math.floor(x.uptime/3600)+"h "+Math.floor((x.uptime%3600)/60)+"m")
+    ].join("");
+
+    const d=w.defender||{};
+    document.getElementById("security").innerHTML=[
+      card("DEFENDER SERVICE",d.AMServiceEnabled===true?"Enabled":d.AMServiceEnabled===false?"Disabled":"Unavailable"),
+      card("ANTIVIRUS",d.AntivirusEnabled===true?"Enabled":d.AntivirusEnabled===false?"Disabled":"Unavailable"),
+      card("REAL-TIME PROTECTION",d.RealTimeProtectionEnabled===true?"Enabled":d.RealTimeProtectionEnabled===false?"Disabled":"Unavailable"),
+      card("FIREWALL PROFILES",(w.firewall||[]).filter(f=>f.Enabled).map(f=>f.Name).join(", ")||"Unavailable")
+    ].join("");
+
+    rows("procs",(x.processes||[]).map(p=>"<tr><td>"+p.pid+"</td><td>"+e(p.name)+"</td><td>"+(p.ppid??"")+"</td><td>"+e(p.user)+"</td><td>"+p.ram_mb+" MB</td><td>"+e(p.status)+"</td><td>"+e(p.started)+"</td><td>"+e(p.exe)+"</td></tr>").join(""));
+    rows("net",(x.connections||[]).map(c=>"<tr><td>"+(c.pid??"")+"</td><td>"+e(c.local)+"</td><td>"+e(c.remote)+"</td><td>"+e(c.family)+"</td><td>"+e(c.status)+"</td></tr>").join(""));
+    rows("services",(x.services||[]).slice(0,200).map(s=>"<tr><td>"+e(s.Name)+"</td><td>"+e(s.DisplayName)+"</td><td>"+e(s.Status)+"</td><td>"+e(s.StartType)+"</td></tr>").join(""));
+    rows("startup",(x.startup||[]).map(s=>"<tr><td>"+e(s.Location)+"</td><td>"+e(s.Name)+"</td><td>"+e(s.Command)+"</td></tr>").join(""));
+    rows("events",(x.events||[]).map(v=>"<tr><td>"+e(v.Time)+"</td><td>"+e(v.Log)+"</td><td>"+e(v.Id)+"</td><td>"+e(v.Level)+"</td><td>"+e(v.Provider)+"</td><td>"+e(v.Message)+"</td></tr>").join(""));
+  } catch(err) {
+    document.getElementById("host").textContent="Telemetry error: "+err;
+  }
+}
+load();
+setInterval(load,5000);
+</script>
+</body>
+</html>
