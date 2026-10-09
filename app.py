@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template
 from collector import snapshot
 from tracker import compare
+from risk import assess
 import os
 
 app = Flask(__name__)
@@ -19,6 +20,11 @@ def api_snapshot():
 @app.get("/api/changes")
 def api_changes():
     return jsonify(compare(snapshot()))
+
+
+@app.get("/api/risk")
+def api_risk():
+    return jsonify(assess(snapshot()))
 
 
 @app.get("/api/health")
