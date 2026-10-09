@@ -157,20 +157,57 @@ def snapshot():
         except (OSError, PermissionError):
             pass
 
+    try:
+        freq = psutil.cpu_freq()
+        cpu_frequency = {
+            "current_mhz": round(freq.current, 1) if freq else None,
+            "min_mhz": round(freq.min, 1) if freq else None,
+            "max_mhz": round(freq.max, 1) if freq else None,
+        }
+    except (AttributeError, OSError):
+        cpu_frequency = {"current_mhz": None, "min_mhz": None, "max_mhz": None}
+
+    try:
+        battery = psutil.sensors_battery()
+        battery_info = {
+            "percent": battery.percent if battery else None,
+            "plugged": battery.power_plugged if battery else None,
+            "seconds_left": battery.secsleft if battery else None,
+        }
+    except (AttributeError, OSError):
+        battery_info = {"percent": None, "plugged": None, "seconds_left": None}
+
+    try:
+        disk_io = psutil.disk_io_counters()
+        disk_activity = {
+            "read_bytes": disk_io.read_bytes if disk_io else 0,
+            "write_bytes": disk_io.write_bytes if disk_io else 0,
+            "read_count": disk_io.read_count if disk_io else 0,
+            "write_count": disk_io.write_count if disk_io else 0,
+        }
+    except (AttributeError, OSError):
+        disk_activity = {"read_bytes": 0, "write_bytes": 0, "read_count": 0, "write_count": 0}
+
     return {
         "time": datetime.now().isoformat(timespec="seconds"),
         "host": socket.gethostname(),
+        "user": os.environ.get("USERNAME") or os.environ.get("USER"),
         "os": platform.platform(),
         "cpu": psutil.cpu_percent(.1),
         "cpu_cores": psutil.cpu_count(logical=False),
         "cpu_threads": psutil.cpu_count(logical=True),
+        "cpu_frequency": cpu_frequency,
         "memory": vm.percent,
         "memory_total": vm.total,
+        "memory_available": vm.available,
         "disk": psutil.disk_usage(disk_path).percent,
         "processes": procs[:150],
         "connections": conns[:300],
         "network": {"sent": io.bytes_sent, "received": io.bytes_recv},
+        "disk_activity": disk_activity,
         "partitions": partitions,
+        "battery": battery_info,
+        "boot_time": datetime.fromtimestamp(psutil.boot_time()).isoformat(timespec="seconds"),
         "uptime": time.time() - psutil.boot_time(),
         "windows": windows_info(),
         "services": services(),
