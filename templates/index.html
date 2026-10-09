@@ -253,22 +253,24 @@ async function inventory(){
 async function advanced(){
  try{
   const d=await fetch("/api/advanced").then(r=>r.json());
-  const b=(d.battery||[])[0]||{};
+  const list=v=>Array.isArray(v)?v:(v&&typeof v==="object"?[v]:[]);
+  const batteries=list(d.battery), products=list(d.security_products), updates=list(d.update_services), counts=list(d.event_counts_24h), crashes=list(d.reliability_events);
+  const b=batteries[0]||{};
   const t=d.time_sync||{};
   document.getElementById("advanced-grid").innerHTML=[
    card("BATTERY",b.EstimatedChargeRemaining==null?"N/A":b.EstimatedChargeRemaining+"%"),
    card("BATTERY STATUS",b.Status||"N/A"),
    card("EST. RUNTIME",b.EstimatedRunTime==null?"N/A":b.EstimatedRunTime+" min"),
-   card("SECURITY PRODUCTS",(d.security_products||[]).length),
-   card("UPDATE SERVICE HEALTH",(d.update_services||[]).filter(x=>String(x.State).toLowerCase()==="running").length+"/"+(d.update_services||[]).length+" running"),
-   card("CRASH / WER EVENTS",(d.reliability_events||[]).length),
-   card("EVENT LOGS",(d.event_counts_24h||[]).length),
+   card("SECURITY PRODUCTS",products.length),
+   card("UPDATE SERVICE HEALTH",updates.filter(x=>String(x.State).toLowerCase()==="running").length+"/"+updates.length+" running"),
+   card("CRASH / WER EVENTS",crashes.length),
+   card("EVENT LOG ROWS",counts.length),
    card("TIME SOURCE",t.source||"Unavailable")
   ].join("");
-  document.getElementById("advanced-security").innerHTML=invSection("Windows Security Center Products",d.security_products||[]);
-  setRows("update-services",(d.update_services||[]).map(s=>"<tr><td>"+esc(s.Name)+"</td><td><span class='chip'>"+esc(s.State)+"</span></td><td>"+esc(s.StartMode)+"</td><td>"+esc(s.ProcessId)+"</td><td>"+esc(s.StartName)+"</td></tr>").join(""),5);
-  setRows("event-counts",(d.event_counts_24h||[]).map(v=>"<tr><td>"+esc(v.Log)+"</td><td>"+esc(v.Level)+"</td><td>"+esc(v.Count)+"</td><td>"+esc(v.WindowHours)+"h</td></tr>").join(""),4);
-  setRows("reliability-events",(d.reliability_events||[]).map(v=>"<tr><td>"+esc(v.TimeCreated)+"</td><td>"+esc(v.Id)+"</td><td>"+esc(v.ProviderName)+"</td><td>"+esc(v.LevelDisplayName)+"</td><td class='message'>"+esc(v.Message)+"</td></tr>").join(""),5);
+  document.getElementById("advanced-security").innerHTML=invSection("Windows Security Center Products",products);
+  setRows("update-services",(updates).map(s=>"<tr><td>"+esc(s.Name)+"</td><td><span class='chip'>"+esc(s.State)+"</span></td><td>"+esc(s.StartMode)+"</td><td>"+esc(s.ProcessId)+"</td><td>"+esc(s.StartName)+"</td></tr>").join(""),5);
+  setRows("event-counts",(counts).map(v=>"<tr><td>"+esc(v.Log)+"</td><td>"+esc(v.Level)+"</td><td>"+esc(v.Count)+"</td><td>"+esc(v.WindowHours)+"h</td></tr>").join(""),4);
+  setRows("reliability-events",(crashes).map(v=>"<tr><td>"+esc(v.TimeCreated)+"</td><td>"+esc(v.Id)+"</td><td>"+esc(v.ProviderName)+"</td><td>"+esc(v.LevelDisplayName)+"</td><td class='message'>"+esc(v.Message)+"</td></tr>").join(""),5);
   document.getElementById("time-sync").textContent=(t.source||"Source unavailable")+"\\n\\n"+(t.status||"Status unavailable");
   document.getElementById("power-capabilities").textContent=d.power_capabilities||"Unavailable";
  }catch(e){document.getElementById("advanced-grid").innerHTML="<div class='emptybox'>Deep telemetry error: "+esc(e)+"</div>"}
