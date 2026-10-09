@@ -24,7 +24,7 @@ def assess(snapshot):
     temp_like = []
     for item in startup:
         command = str(item.get("Command") or "").lower()
-        if "\temp\" in command or "\appdata\local\temp\" in command:
+        if "\\temp\\" in command or "\\appdata\\local\\temp\\" in command:
             temp_like.append(item.get("Name"))
     if temp_like:
         score += min(20, 5 * len(temp_like))
