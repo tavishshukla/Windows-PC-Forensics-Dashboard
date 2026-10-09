@@ -127,6 +127,14 @@ def snapshot():
         try:
             i = p.info
             m = i.get("memory_info")
+            try:
+                io_stats = p.io_counters()
+            except (psutil.NoSuchProcess, psutil.AccessDenied, OSError, AttributeError):
+                io_stats = None
+            try:
+                memory_percent = round(p.memory_percent(), 2)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+                memory_percent = None
             procs.append({
                 "pid": i["pid"], "ppid": i.get("ppid"), "name": i.get("name"),
                 "user": i.get("username"), "status": i.get("status"),
