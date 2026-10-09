@@ -3,6 +3,7 @@ from collector import snapshot
 from tracker import compare
 from risk import assess
 from history import init_db, record, recent, findings
+from forensics import build_findings
 import os
 
 app = Flask(__name__)
@@ -31,6 +32,13 @@ def api_snapshot():
 @app.get("/api/changes")
 def api_changes():
     return jsonify(compare(snapshot()))
+
+
+@app.get("/api/findings/live")
+def api_live_findings():
+    current = snapshot()
+    changes = compare(current)
+    return jsonify(build_findings(current, changes))
 
 
 @app.get("/api/risk")
