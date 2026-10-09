@@ -23,6 +23,7 @@
     <a href="#sessions"><span>09</span>Sessions</a>
     <a href="#inventory"><span>10</span>Inventory</a>
     <a href="#history"><span>11</span>History</a>
+    <a href="#advanced"><span>12</span>Deep Telemetry</a>
   </nav>
   <div class="sidebar-bottom"><span class="lock-badge">READ ONLY</span><p>No process killing<br>No firewall changes<br>No credential collection</p></div>
 </aside>
@@ -105,6 +106,23 @@
 <section id="inventory" class="panel">
   <div class="section-head"><div><div class="eyebrow">10 / FULL INVENTORY</div><h2>PC Inventory</h2><p>Hardware, storage, adapters, routing, users, software, updates, drivers, printers and USB devices.</p></div></div>
   <div id="inventory-content" class="inventory-grid"><div class="emptybox">Loading inventory...</div></div>
+</section>
+
+<section id="advanced" class="panel">
+  <div class="section-head"><div><div class="eyebrow">12 / DEEP TELEMETRY</div><h2>Windows Health & Reliability</h2><p>Additional read-only power, security-provider, update-service, time-sync, crash and event-volume telemetry.</p></div><span class="refresh-pill">AUTO 15s</span></div>
+  <div id="advanced-grid" class="detail-grid"></div>
+  <div class="subhead">SECURITY PRODUCTS</div>
+  <div id="advanced-security" class="inventory-grid"></div>
+  <div class="subhead">UPDATE SERVICES</div>
+  <div class="table-shell"><table><thead><tr><th>Name</th><th>State</th><th>Start Mode</th><th>PID</th><th>Service Account</th></tr></thead><tbody id="update-services"></tbody></table></div>
+  <div class="subhead">EVENT VOLUME — LAST 24 HOURS</div>
+  <div class="table-shell"><table><thead><tr><th>Log</th><th>Level</th><th>Count</th><th>Window</th></tr></thead><tbody id="event-counts"></tbody></table></div>
+  <div class="subhead">RECENT APPLICATION CRASH / WER EVENTS</div>
+  <div class="table-shell"><table><thead><tr><th>Time</th><th>ID</th><th>Provider</th><th>Level</th><th>Message</th></tr></thead><tbody id="reliability-events"></tbody></table></div>
+  <div class="subhead">TIME SYNCHRONIZATION</div>
+  <pre id="time-sync" class="telemetry-pre"></pre>
+  <div class="subhead">POWER CAPABILITIES</div>
+  <pre id="power-capabilities" class="telemetry-pre"></pre>
 </section>
 
 <section id="history" class="panel">
@@ -232,6 +250,30 @@ async function inventory(){
  }catch(e){document.getElementById("inventory-content").innerHTML="<div class='emptybox'>Inventory error: "+esc(e)+"</div>"}
 }
 
+async function advanced(){
+ try{
+  const d=await fetch("/api/advanced").then(r=>r.json());
+  const b=(d.battery||[])[0]||{};
+  const t=d.time_sync||{};
+  document.getElementById("advanced-grid").innerHTML=[
+   card("BATTERY",b.EstimatedChargeRemaining==null?"N/A":b.EstimatedChargeRemaining+"%"),
+   card("BATTERY STATUS",b.Status||"N/A"),
+   card("EST. RUNTIME",b.EstimatedRunTime==null?"N/A":b.EstimatedRunTime+" min"),
+   card("SECURITY PRODUCTS",(d.security_products||[]).length),
+   card("UPDATE SERVICE HEALTH",(d.update_services||[]).filter(x=>String(x.State).toLowerCase()==="running").length+"/"+(d.update_services||[]).length+" running"),
+   card("CRASH / WER EVENTS",(d.reliability_events||[]).length),
+   card("EVENT LOGS",(d.event_counts_24h||[]).length),
+   card("TIME SOURCE",t.source||"Unavailable")
+  ].join("");
+  document.getElementById("advanced-security").innerHTML=invSection("Windows Security Center Products",d.security_products||[]);
+  setRows("update-services",(d.update_services||[]).map(s=>"<tr><td>"+esc(s.Name)+"</td><td><span class='chip'>"+esc(s.State)+"</span></td><td>"+esc(s.StartMode)+"</td><td>"+esc(s.ProcessId)+"</td><td>"+esc(s.StartName)+"</td></tr>").join(""),5);
+  setRows("event-counts",(d.event_counts_24h||[]).map(v=>"<tr><td>"+esc(v.Log)+"</td><td>"+esc(v.Level)+"</td><td>"+esc(v.Count)+"</td><td>"+esc(v.WindowHours)+"h</td></tr>").join(""),4);
+  setRows("reliability-events",(d.reliability_events||[]).map(v=>"<tr><td>"+esc(v.TimeCreated)+"</td><td>"+esc(v.Id)+"</td><td>"+esc(v.ProviderName)+"</td><td>"+esc(v.LevelDisplayName)+"</td><td class='message'>"+esc(v.Message)+"</td></tr>").join(""),5);
+  document.getElementById("time-sync").textContent=(t.source||"Source unavailable")+"\\n\\n"+(t.status||"Status unavailable");
+  document.getElementById("power-capabilities").textContent=d.power_capabilities||"Unavailable";
+ }catch(e){document.getElementById("advanced-grid").innerHTML="<div class='emptybox'>Deep telemetry error: "+esc(e)+"</div>"}
+}
+
 async function history(){
  try{
   const [h,f]=await Promise.all([fetch("/api/history").then(r=>r.json()),fetch("/api/findings").then(r=>r.json())]);
@@ -245,8 +287,8 @@ document.getElementById("process-filter").oninput=()=>filterTable(document.getEl
 document.getElementById("network-filter").oninput=()=>filterTable(document.getElementById("network-filter"),"net");
 document.getElementById("service-filter").oninput=()=>filterTable(document.getElementById("service-filter"),"services-table");
 document.getElementById("task-filter").oninput=()=>filterTable(document.getElementById("task-filter"),"tasks-table");
-load();changes();inventory();history();
-setInterval(load,5000);setInterval(changes,5000);setInterval(history,10000);
+load();changes();inventory();advanced();history();
+setInterval(load,5000);setInterval(changes,5000);setInterval(inventory,30000);setInterval(advanced,15000);setInterval(history,10000);
 window.addEventListener("resize",()=>history());
 </script>
 </body>
